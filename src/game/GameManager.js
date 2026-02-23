@@ -5,9 +5,11 @@
  */
 
 import { HexGrid } from '../core/HexGrid.js';
+import { HexCoord } from '../core/HexCoord.js';
 import { MergeSystem } from '../core/MergeSystem.js';
 import { ScoreManager } from './ScoreManager.js';
 import * as TileHelper from '../core/TileHelper.js';
+import * as SaveSystem from './SaveSystem.js';
 
 /**
  * Game states.
@@ -101,6 +103,19 @@ export class GameManager extends EventTarget {
             attempts++;
         } while (!this.grid.hasValidMerge() && attempts < 100);
 
+        this.updateCrowns();
+        this._setState(GameState.PLAYING);
+    }
+
+    /**
+     * Restore a saved game state.
+     * @param {import('./SaveSystem.js').GameSaveData} data
+     */
+    restoreGame(data) {
+        SaveSystem.applyToGrid(data, this.grid);
+        this.score.reset();
+        this.score.currentScore = data.score;
+        this.score._notifyScoreChanged();
         this.updateCrowns();
         this._setState(GameState.PLAYING);
     }

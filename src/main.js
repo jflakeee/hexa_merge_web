@@ -17,6 +17,7 @@ import { HUDManager } from './ui/HUDManager.js';
 import { GameOverScreen } from './ui/GameOverScreen.js';
 import { PauseScreen } from './ui/PauseScreen.js';
 import { HowToPlayScreen } from './ui/HowToPlayScreen.js';
+import * as SaveSystem from './game/SaveSystem.js';
 // ============================================================
 // DOM References
 // ============================================================
@@ -82,6 +83,9 @@ function initGame() {
     window.addEventListener('resize', () => {
         renderer.resize();
     });
+    window.addEventListener('orientationchange', () => {
+        setTimeout(() => renderer.resize(), 150);
+    });
 
     // Input
     inputManager.init();
@@ -127,6 +131,7 @@ function initGame() {
         gameOverScreen.hide();
         // Continue: remove 3 random tiles and resume
         gameManager.continueAfterGameOver();
+        SaveSystem.save(gameManager.grid, gameManager.score.currentScore);
     };
     gameOverScreen.onPlayAgain = () => {
         screenManager.hideScreen('gameover');
@@ -198,6 +203,9 @@ function initGame() {
             const pos = renderer.hexToPixel(result.tapCoord.q, result.tapCoord.r);
             effects.playSplash(pos.x, pos.y, '#FF69B4');
         }
+
+        // Auto-save after merge
+        SaveSystem.save(gameManager.grid, gameManager.score.currentScore);
     });
 
     // 'scoreupdate' event - detail: { currentScore, highScore }
@@ -211,6 +219,7 @@ function initGame() {
     gameManager.addEventListener('statechange', (e) => {
         const { state } = e.detail;
         if (state === 'gameover') {
+            SaveSystem.deleteSave();
             sfx.play('gameOver');
             const currentScore = gameManager.score.currentScore;
             const highScore = gameManager.score.highScore;
@@ -242,14 +251,27 @@ function initGame() {
         }
     });
 
-    // Start game
-    startNewGame();
+    // Restore saved game or start new
+    const savedData = SaveSystem.load();
+    if (savedData && savedData.cells.length > 0) {
+        gameManager.restoreGame(savedData);
+        hudManager.updateScore(gameManager.score.currentScore);
+        hudManager.updateHighScore(gameManager.score.highScore);
+        if (!running) {
+            running = true;
+            lastTimestamp = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
+    } else {
+        startNewGame();
+    }
 }
 
 /**
  * Start a new game session.
  */
 function startNewGame() {
+    SaveSystem.deleteSave();
     gameManager.startNewGame();
 
     sfx.play('gameStart');

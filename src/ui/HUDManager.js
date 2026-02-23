@@ -49,13 +49,27 @@ export class HUDManager {
 
         // Dynamic font size based on character length
         const len = formatted.length;
+        let basePx;
         if (len <= 3) {
-            this._scoreEl.style.fontSize = '48px';
+            basePx = 48;
         } else if (len <= 6) {
-            this._scoreEl.style.fontSize = '36px';
+            basePx = 36;
         } else {
-            this._scoreEl.style.fontSize = '28px';
+            basePx = 28;
         }
+
+        // Viewport-based scale factor for small screens
+        const vw = window.innerWidth;
+        let scale = 1;
+        if (vw <= 320) {
+            scale = 0.58;
+        } else if (vw <= 360) {
+            scale = 0.67;
+        } else if (vw <= 480) {
+            scale = 0.83;
+        }
+
+        this._scoreEl.style.fontSize = Math.round(basePx * scale) + 'px';
     }
 
     /**
