@@ -129,9 +129,8 @@ function initGame() {
     gameOverScreen.onContinue = () => {
         screenManager.hideScreen('gameover');
         gameOverScreen.hide();
-        // Continue: remove 3 random tiles and resume
+        // Continue: remove 3 random tiles and resume (auto-saved via newtiles handler)
         gameManager.continueAfterGameOver();
-        SaveSystem.save(gameManager.grid, gameManager.score.currentScore);
     };
     gameOverScreen.onPlayAgain = () => {
         screenManager.hideScreen('gameover');
@@ -204,8 +203,6 @@ function initGame() {
             effects.playSplash(pos.x, pos.y, '#FF69B4');
         }
 
-        // Auto-save after merge
-        SaveSystem.save(gameManager.grid, gameManager.score.currentScore);
     });
 
     // 'scoreupdate' event - detail: { currentScore, highScore }
@@ -241,6 +238,9 @@ function initGame() {
             });
             sfx.play('tileDrop');
         }
+
+        // Auto-save after board refill (newtiles fires after fillAllEmptyCells)
+        SaveSystem.save(gameManager.grid, gameManager.score.currentScore);
     });
 
     // 'crownchange' event - detail: { crownCoords: HexCoord[] }
