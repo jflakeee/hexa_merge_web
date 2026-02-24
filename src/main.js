@@ -153,7 +153,6 @@ function initGame() {
     // Input
     inputManager.init();
     inputManager.onCellTap = (coord) => {
-        sfx.play('tap');
         gameManager.handleTap(coord);
     };
 
