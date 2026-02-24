@@ -87,9 +87,13 @@ export class TileAnimator {
     /** @type {{shakeX: number, shakeY: number}} */
     shakeOffset;
 
+    /** @type {Array<{value:number,startX:number,startY:number,x:number,y:number,targetX:number,targetY:number,duration:number,elapsed:number,scale:number,alpha:number,resolve:Function|null}>} */
+    ghostCells;
+
     constructor() {
         this.activeAnimations = [];
         this.scorePopups = [];
+        this.ghostCells = [];
         this.shakeOffset = { shakeX: 0, shakeY: 0 };
     }
 
@@ -115,6 +119,27 @@ export class TileAnimator {
                     anim.resolve = null;
                 }
                 this.activeAnimations.splice(i, 1);
+            }
+        }
+
+        // Update ghost cells (step merge animation)
+        for (let i = this.ghostCells.length - 1; i >= 0; i--) {
+            const ghost = this.ghostCells[i];
+            ghost.elapsed += dt;
+            const t = Math.min(ghost.elapsed / ghost.duration, 1);
+            const eased = easeOutQuad(t);
+
+            ghost.x = lerp(ghost.startX, ghost.targetX, eased);
+            ghost.y = lerp(ghost.startY, ghost.targetY, eased);
+            ghost.scale = lerp(1, 0.5, eased);
+            ghost.alpha = t < 0.7 ? 1 : lerp(1, 0, (t - 0.7) / 0.3);
+
+            if (ghost.elapsed >= ghost.duration) {
+                if (ghost.resolve) {
+                    ghost.resolve();
+                    ghost.resolve = null;
+                }
+                this.ghostCells.splice(i, 1);
             }
         }
 
@@ -150,7 +175,8 @@ export class TileAnimator {
      */
     hasActiveAnimations() {
         return this.activeAnimations.length > 0
-            || this.scorePopups.length > 0;
+            || this.scorePopups.length > 0
+            || this.ghostCells.length > 0;
     }
 
     /**
@@ -317,6 +343,38 @@ export class TileAnimator {
     }
 
     /**
+     * Play a step merge animation: ghost cells slide from source positions to target.
+     * Source cells should be cleared before calling this (ghosts handle the visual).
+     * @param {number} value - Tile value to display on ghost cells
+     * @param {Array<{x: number, y: number}>} sourcePositions - Screen positions of source cells
+     * @param {{x: number, y: number}} targetPosition - Screen position of the merge target
+     * @param {number} [duration=0.2]
+     * @returns {Promise<void>}
+     */
+    playStepMerge(value, sourcePositions, targetPosition, duration = 0.2) {
+        const promises = sourcePositions.map((pos) => {
+            return new Promise((resolve) => {
+                this.ghostCells.push({
+                    value,
+                    startX: pos.x,
+                    startY: pos.y,
+                    x: pos.x,
+                    y: pos.y,
+                    targetX: targetPosition.x,
+                    targetY: targetPosition.y,
+                    duration,
+                    elapsed: 0,
+                    scale: 1,
+                    alpha: 1,
+                    resolve,
+                });
+            });
+        });
+
+        return Promise.all(promises);
+    }
+
+    /**
      * Internal: play a scale punch on a cell (1 -> 1.3 -> 1).
      * @param {string} coordKey
      * @param {number} [duration=0.15]
@@ -443,5 +501,13 @@ export class TileAnimator {
             }
         }
         this.scorePopups.length = 0;
+
+        for (const ghost of this.ghostCells) {
+            if (ghost.resolve) {
+                ghost.resolve();
+                ghost.resolve = null;
+            }
+        }
+        this.ghostCells.length = 0;
     }
 }

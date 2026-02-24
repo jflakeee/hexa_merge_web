@@ -17,7 +17,10 @@ import { HUDManager } from './ui/HUDManager.js';
 import { GameOverScreen } from './ui/GameOverScreen.js';
 import { PauseScreen } from './ui/PauseScreen.js';
 import { HowToPlayScreen } from './ui/HowToPlayScreen.js';
+import { StatsScreen } from './ui/StatsScreen.js';
 import * as SaveSystem from './game/SaveSystem.js';
+import * as StatsSystem from './game/StatsSystem.js';
+import { setEmptyCellColors } from './render/HexCellView.js';
 // ============================================================
 // DOM References
 // ============================================================
@@ -38,12 +41,53 @@ const hudManager = new HUDManager();
 const gameOverScreen = new GameOverScreen();
 const pauseScreen = new PauseScreen();
 const howToPlayScreen = new HowToPlayScreen();
+const statsScreen = new StatsScreen();
 
 // ============================================================
 // Game state
 // ============================================================
 let lastTimestamp = 0;
 let running = false;
+
+// ============================================================
+// Theme system
+// ============================================================
+const THEME_KEY = 'hexmerge_theme';
+
+/**
+ * Apply the current theme to Canvas rendering colors.
+ * Reads CSS custom properties and updates HexCellView accordingly.
+ */
+function applyThemeToCanvas() {
+    const style = getComputedStyle(document.body);
+    const fill = style.getPropertyValue('--empty-cell-fill').trim();
+    const stroke = style.getPropertyValue('--empty-cell-stroke').trim();
+    if (fill && stroke) {
+        setEmptyCellColors(fill, stroke);
+    }
+}
+
+/**
+ * Toggle between light and dark mode.
+ * @returns {boolean} true if now in light mode
+ */
+function toggleTheme() {
+    const isLight = document.body.classList.toggle('light-mode');
+    localStorage.setItem(THEME_KEY, isLight ? 'light' : 'dark');
+    applyThemeToCanvas();
+    return isLight;
+}
+
+/**
+ * Restore saved theme preference from localStorage.
+ */
+function restoreTheme() {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'light') {
+        document.body.classList.add('light-mode');
+    }
+    applyThemeToCanvas();
+}
 
 // ============================================================
 // Initialization sequence
@@ -55,7 +99,10 @@ let running = false;
  * AudioContext creation requires a user gesture on iOS and Chrome.
  */
 function waitForUserGesture() {
+    const btnPlay = document.getElementById('btn-play');
+
     const handler = () => {
+        btnPlay.removeEventListener('click', handler);
         loadingScreen.removeEventListener('pointerdown', handler);
 
         // Initialize audio (requires user gesture for iOS/Chrome autoplay policy)
@@ -71,13 +118,28 @@ function waitForUserGesture() {
         initGame();
     };
 
-    loadingScreen.addEventListener('pointerdown', handler);
+    // PLAY button or tap anywhere
+    btnPlay.addEventListener('click', handler);
+    loadingScreen.addEventListener('pointerdown', (e) => {
+        // Only handle taps outside the button (button handles its own click)
+        if (e.target !== btnPlay) handler();
+    });
 }
 
 /**
  * Initialize all game subsystems and start the game loop.
  */
 function initGame() {
+    // Load stats and sync high score from ScoreManager
+    const stats = StatsSystem.load();
+    if (gameManager.score.highScore > stats.highScore) {
+        stats.highScore = gameManager.score.highScore;
+        StatsSystem.save();
+    }
+
+    // Restore saved theme preference
+    restoreTheme();
+
     // Renderer already initializes in constructor (calls resize()).
     // Listen for window resize to re-fit the grid.
     window.addEventListener('resize', () => {
@@ -141,6 +203,7 @@ function initGame() {
     // Pause screen
     pauseScreen.init(document.getElementById('screen-pause'));
     pauseScreen.updateSoundButton(sfx.isMuted());
+    pauseScreen.updateThemeButton(document.body.classList.contains('light-mode'));
     pauseScreen.onResume = () => {
         sfx.play('buttonClick');
         screenManager.hideScreen('pause');
@@ -160,6 +223,31 @@ function initGame() {
         pauseScreen.updateSoundButton(muted);
         sfx.play('buttonClick');
     };
+    pauseScreen.onThemeToggle = () => {
+        sfx.play('buttonClick');
+        const isLight = toggleTheme();
+        pauseScreen.updateThemeButton(isLight);
+    };
+
+    // Stats button in pause screen
+    pauseScreen.onStats = () => {
+        sfx.play('buttonClick');
+        screenManager.hideScreen('pause');
+        pauseScreen.hide();
+        statsScreen.show(StatsSystem.getStats());
+        screenManager.showScreen('stats');
+    };
+
+    // Stats screen
+    statsScreen.init(document.getElementById('screen-stats'));
+    statsScreen.onClose = () => {
+        sfx.play('buttonClick');
+        screenManager.hideScreen('stats');
+        statsScreen.hide();
+        // Return to pause screen
+        screenManager.showScreen('pause');
+        pauseScreen.show();
+    };
 
     // How To Play screen
     howToPlayScreen.init(document.getElementById('screen-howtoplay'));
@@ -173,7 +261,25 @@ function initGame() {
     // GameManager event wiring (EventTarget / CustomEvent API)
     // ----------------------------------------------------------
 
+    // 'mergestep' event - detail: { group, cellValue, tapCoord, stepValue, done }
+    // Handles step-by-step merge animation (ghost cells slide to target)
+    gameManager.addEventListener('mergestep', async (e) => {
+        const { group, cellValue, tapCoord, done } = e.detail;
+
+        const sourcePositions = group.map((c) => renderer.hexToPixel(c.q, c.r));
+        const targetPosition = renderer.hexToPixel(tapCoord.q, tapCoord.r);
+
+        // Ghost cells slide from source positions to target
+        await animator.playStepMerge(cellValue, sourcePositions, targetPosition, 0.18);
+
+        // Scale punch on target cell
+        await animator._playScalePunch(tapCoord.toKey(), 0.1);
+
+        done();
+    });
+
     // 'merge' event - detail: { result: MergeResult }
+    // Fires after all step animations complete (SFX, score popup, effects, stats)
     gameManager.addEventListener('merge', (e) => {
         const { result } = e.detail;
 
@@ -187,22 +293,14 @@ function initGame() {
             animator.playScorePopup(pos.x, pos.y, result.scoreGained);
         }
 
-        // Merge movement animation: source cells slide to target
-        if (result.mergedCoords && result.tapCoord) {
-            const fromPositions = result.mergedCoords.map((coord) => {
-                return renderer.hexToPixel(coord.q, coord.r);
-            });
-            const toCoordKey = result.tapCoord.toKey();
-            const toPosition = renderer.hexToPixel(result.tapCoord.q, result.tapCoord.r);
-            animator.playMergeAnimation(fromPositions, toCoordKey, toPosition);
-        }
-
         // Visual merge effect (particles / splash)
         if (result.tapCoord) {
             const pos = renderer.hexToPixel(result.tapCoord.q, result.tapCoord.r);
             effects.playSplash(pos.x, pos.y, '#FF69B4');
         }
 
+        // Record stats
+        StatsSystem.recordMerge(result.depthGroups.length, result.resultValue);
     });
 
     // 'scoreupdate' event - detail: { currentScore, highScore }
@@ -225,6 +323,9 @@ function initGame() {
             const maxTileValue = highestCell ? highestCell.value : 0;
             gameOverScreen.show(currentScore, highScore, isNewRecord, maxTileValue);
             screenManager.showScreen('gameover');
+
+            // Record game over stats
+            StatsSystem.recordGameOver(currentScore, highScore);
         }
     });
 
@@ -321,4 +422,11 @@ function gameLoop(timestamp) {
 // ============================================================
 // Entry point
 // ============================================================
+
+// Apply saved theme immediately (before game init, so landing page respects theme)
+const savedTheme = localStorage.getItem(THEME_KEY);
+if (savedTheme === 'light') {
+    document.body.classList.add('light-mode');
+}
+
 waitForUserGesture();

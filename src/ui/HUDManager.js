@@ -87,7 +87,7 @@ export class HUDManager {
      */
     setSoundIcon(muted) {
         if (!this._btnSound) return;
-        this._btnSound.textContent = muted ? '\u2715' : '\u266A';
+        this._btnSound.textContent = muted ? '\u{1F507}' : '\u{1F50A}';
     }
 
     /**

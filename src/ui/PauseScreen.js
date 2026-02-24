@@ -15,12 +15,21 @@ export class PauseScreen {
         /** @type {HTMLButtonElement|null} */
         this._soundBtn = null;
 
+        /** @type {HTMLButtonElement|null} */
+        this._moonBtn = null;
+        /** @type {HTMLButtonElement|null} */
+        this._statsBtn = null;
+
         /** Callback when "Resume" is pressed. @type {function|null} */
         this.onResume = null;
         /** Callback when "Restart" is pressed. @type {function|null} */
         this.onRestart = null;
         /** Callback when sound toggle is pressed. @type {function|null} */
         this.onSoundToggle = null;
+        /** Callback when theme toggle is pressed. @type {function|null} */
+        this.onThemeToggle = null;
+        /** Callback when stats button is pressed. @type {function|null} */
+        this.onStats = null;
     }
 
     /**
@@ -46,7 +55,7 @@ export class PauseScreen {
 
         // --- Body ---
         const body = document.createElement('div');
-        body.style.cssText = 'background:#1a1a1e;padding:24px 20px 28px;text-align:center;border-radius:0 0 16px 16px;';
+        body.style.cssText = 'background:var(--card-bg, #1a1a1e);padding:24px 20px 28px;text-align:center;border-radius:0 0 16px 16px;';
 
         // Icon buttons row
         const iconRow = document.createElement('div');
@@ -73,19 +82,29 @@ export class PauseScreen {
         starBtn.title = 'Rate';
         iconRow.appendChild(starBtn);
 
-        // Moon/theme (blue) - decorative
-        const moonBtn = document.createElement('button');
-        moonBtn.style.cssText = iconBtnStyle + 'background:#42A5F5;';
-        moonBtn.textContent = '\u{1F319}';
-        moonBtn.title = 'Theme';
-        iconRow.appendChild(moonBtn);
+        // Moon/theme (blue)
+        this._moonBtn = document.createElement('button');
+        this._moonBtn.style.cssText = iconBtnStyle + 'background:#42A5F5;';
+        this._moonBtn.textContent = '\u{1F319}';
+        this._moonBtn.title = 'Theme';
+        this._moonBtn.addEventListener('click', () => {
+            if (this.onThemeToggle) this.onThemeToggle();
+        });
+        this._moonBtn.addEventListener('pointerdown', () => { this._moonBtn.style.transform = 'scale(0.9)'; });
+        this._moonBtn.addEventListener('pointerup', () => { this._moonBtn.style.transform = ''; });
+        iconRow.appendChild(this._moonBtn);
 
-        // Stats (green) - decorative
-        const statsBtn = document.createElement('button');
-        statsBtn.style.cssText = iconBtnStyle + 'background:#66BB6A;';
-        statsBtn.textContent = '\u{1F4CA}';
-        statsBtn.title = 'Stats';
-        iconRow.appendChild(statsBtn);
+        // Stats (green)
+        this._statsBtn = document.createElement('button');
+        this._statsBtn.style.cssText = iconBtnStyle + 'background:#66BB6A;';
+        this._statsBtn.textContent = '\u{1F4CA}';
+        this._statsBtn.title = 'Stats';
+        this._statsBtn.addEventListener('click', () => {
+            if (this.onStats) this.onStats();
+        });
+        this._statsBtn.addEventListener('pointerdown', () => { this._statsBtn.style.transform = 'scale(0.9)'; });
+        this._statsBtn.addEventListener('pointerup', () => { this._statsBtn.style.transform = ''; });
+        iconRow.appendChild(this._statsBtn);
 
         body.appendChild(iconRow);
 
@@ -138,5 +157,14 @@ export class PauseScreen {
         if (!this._soundBtn) return;
         this._soundBtn.textContent = muted ? '\u{1F507}' : '\u{1F50A}';
         this._soundBtn.style.background = muted ? '#78909C' : '#00BCD4';
+    }
+
+    /**
+     * Update the theme toggle button icon.
+     * @param {boolean} isLight - true if currently in light mode
+     */
+    updateThemeButton(isLight) {
+        if (!this._moonBtn) return;
+        this._moonBtn.textContent = isLight ? '\u{2600}\u{FE0F}' : '\u{1F319}';
     }
 }

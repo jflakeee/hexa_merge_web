@@ -7,7 +7,31 @@
   <style>
     /* Global reset + game layout */
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Nunito', 'Arial Black', sans-serif; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg-color); font-family: 'Nunito', 'Arial Black', sans-serif; color: var(--text-primary); }
+
+    /* Theme CSS variables */
+    :root {
+      --bg-color: #000;
+      --empty-cell-fill: #1a1a1e;
+      --empty-cell-stroke: #333;
+      --text-primary: #FFF;
+      --text-secondary: #888;
+      --accent: #E91E63;
+      --logo-x-color: #FFF;
+      --overlay-bg: rgba(0,0,0,0.85);
+      --card-bg: #1a1a1e;
+    }
+    body.light-mode {
+      --bg-color: #F0F0F0;
+      --empty-cell-fill: #D0D0D4;
+      --empty-cell-stroke: #BCBCBC;
+      --text-primary: #333;
+      --text-secondary: #666;
+      --accent: #E91E63;
+      --logo-x-color: #7B1FA2;
+      --overlay-bg: rgba(240,240,240,0.92);
+      --card-bg: #FFF;
+    }
 
     #game-container { width: 100%; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; }
 
@@ -16,10 +40,10 @@
     #hud-left, #hud-right { display: flex; gap: 8px; }
     #score-container { text-align: center; flex: 1; }
     #game-title { font-size: 32px; font-weight: 900; letter-spacing: 2px; }
-    #score-label { color: #FFF; font-size: 16px; font-weight: 900; letter-spacing: 2px; }
-    #score { color: #E91E63; font-size: 56px; font-weight: 900; }
-    #hi-score-label { color: #888; font-size: 14px; letter-spacing: 1px; }
-    #hi-score { color: #888; font-size: 24px; font-weight: 900; }
+    #score-label { color: var(--text-primary); font-size: 16px; font-weight: 900; letter-spacing: 2px; }
+    #score { color: var(--accent); font-size: 56px; font-weight: 900; }
+    #hi-score-label { color: var(--text-secondary); font-size: 14px; letter-spacing: 1px; }
+    #hi-score { color: var(--text-secondary); font-size: 24px; font-weight: 900; }
 
     .hud-btn { width: 44px; height: 44px; min-width: 44px; min-height: 44px; background: #E91E63; color: #FFF; font-size: 16px; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%); }
     .hud-btn:active { transform: scale(0.9); }
@@ -28,11 +52,11 @@
     #game-canvas { flex: 1; width: 100%; touch-action: none; }
 
     /* Screen overlay common */
-    .screen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; z-index: 50; background: rgba(0,0,0,0.85); opacity: 0; transition: opacity 0.3s ease; flex-direction: column; gap: 20px; padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .screen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; z-index: 50; background: var(--overlay-bg); opacity: 0; transition: opacity 0.3s ease; flex-direction: column; gap: 20px; padding-bottom: env(safe-area-inset-bottom, 0px); }
     .screen-overlay.active { display: flex; opacity: 1; }
     .screen-overlay h2 { color: #E91E63; font-size: 32px; font-weight: 900; }
-    .screen-overlay .score-display { color: #FFF; font-size: 48px; font-weight: 900; }
-    .screen-overlay .label { color: #888; font-size: 14px; }
+    .screen-overlay .score-display { color: var(--text-primary); font-size: 48px; font-weight: 900; }
+    .screen-overlay .label { color: var(--text-secondary); font-size: 14px; }
     .screen-overlay .new-record { color: #FFD700; font-size: 18px; font-weight: 700; animation: pulse 1s infinite; }
 
     .overlay-btn { padding: 12px 32px; border-radius: 25px; border: none; font-size: 18px; font-weight: 700; cursor: pointer; transition: transform 0.1s; min-height: 44px; }
@@ -42,11 +66,14 @@
 
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-    /* Loading screen */
-    #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.5s; }
+    /* Loading / Landing screen */
+    #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.5s; gap: 12px; }
     #loading-screen.hidden { opacity: 0; pointer-events: none; }
-    #loading-title { font-size: 48px; font-weight: 900; letter-spacing: 8px; }
-    #loading-text { color: #666; font-size: 14px; margin-top: 20px; }
+    #loading-title { font-size: 72px; font-weight: 900; letter-spacing: 12px; }
+    #loading-subtitle { color: var(--text-secondary); font-size: 16px; letter-spacing: 4px; font-weight: 700; }
+    #btn-play { padding: 16px 64px; border-radius: 30px; border: none; background: #E91E63; color: #FFF; font-size: 22px; font-weight: 900; letter-spacing: 4px; cursor: pointer; transition: transform 0.1s; margin-top: 24px; min-height: 56px; }
+    #btn-play:active { transform: scale(0.95); }
+    #loading-text { color: var(--text-secondary); font-size: 12px; margin-top: 8px; opacity: 0.6; }
 
     /* Mobile responsive breakpoints */
     @media (max-width: 480px) {
@@ -59,7 +86,9 @@
       .screen-overlay h2 { font-size: 26px; }
       .screen-overlay .score-display { font-size: 40px; }
       .overlay-btn { padding: 10px 24px; font-size: 16px; }
-      #loading-title { font-size: 36px; letter-spacing: 4px; }
+      #loading-title { font-size: 56px; letter-spacing: 6px; }
+      #loading-subtitle { font-size: 14px; letter-spacing: 3px; }
+      #btn-play { padding: 14px 48px; font-size: 20px; }
     }
     @media (max-width: 360px) {
       #game-title { font-size: 20px; letter-spacing: 1px; }
@@ -71,7 +100,9 @@
       .screen-overlay h2 { font-size: 22px; }
       .screen-overlay .score-display { font-size: 32px; }
       .overlay-btn { padding: 8px 20px; font-size: 15px; }
-      #loading-title { font-size: 28px; letter-spacing: 2px; }
+      #loading-title { font-size: 48px; letter-spacing: 4px; }
+      #loading-subtitle { font-size: 12px; }
+      #btn-play { padding: 12px 40px; font-size: 18px; }
     }
     @media (max-width: 320px) {
       #game-title { font-size: 16px; }
@@ -80,7 +111,8 @@
       #hi-score { font-size: 14px; }
       .screen-overlay h2 { font-size: 18px; }
       .screen-overlay .score-display { font-size: 26px; }
-      #loading-title { font-size: 24px; letter-spacing: 1px; }
+      #loading-title { font-size: 40px; letter-spacing: 2px; }
+      #btn-play { padding: 10px 36px; font-size: 16px; }
     }
   </style>
 </head>
@@ -92,7 +124,7 @@
         <button class="hud-btn" id="btn-sound" title="Sound">&#x1F50A;</button>
       </div>
       <div id="score-container">
-        <div id="game-title"><span style="color:#FFF">X</span><span style="color:#E91E63">UP</span></div>
+        <div id="game-title"><span class="logo-x" style="color:var(--logo-x-color)">X</span><span style="color:#E91E63">UP</span></div>
         <div id="score-label">SCORE</div>
         <div id="score">0</div>
         <div id="hi-score-label">HI-SCORE</div>
@@ -112,11 +144,14 @@
   <div class="screen-overlay" id="screen-gameover" data-screen="gameover"></div>
   <div class="screen-overlay" id="screen-pause" data-screen="pause"></div>
   <div class="screen-overlay" id="screen-howtoplay" data-screen="howtoplay"></div>
+  <div class="screen-overlay" id="screen-stats" data-screen="stats"></div>
 
-  <!-- Loading Screen -->
+  <!-- Landing Screen -->
   <div id="loading-screen">
-    <div id="loading-title"><span style="color:#FFF">X</span><span style="color:#E91E63">UP</span></div>
-    <div id="loading-text">Tap to start</div>
+    <div id="loading-title"><span class="logo-x" style="color:var(--logo-x-color)">X</span><span style="color:#E91E63">UP</span></div>
+    <div id="loading-subtitle">HEXA MERGE</div>
+    <button id="btn-play">PLAY</button>
+    <div id="loading-text">Merge tiles to level up!</div>
   </div>
 
   <script type="module" src="src/main.js"></script>

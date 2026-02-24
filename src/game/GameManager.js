@@ -16,17 +16,18 @@ import * as SaveSystem from './SaveSystem.js';
  * @enum {string}
  */
 export const GameState = Object.freeze({
-    READY:    'ready',
-    PLAYING:  'playing',
-    PAUSED:   'paused',
-    GAMEOVER: 'gameover'
+    READY:     'ready',
+    PLAYING:   'playing',
+    ANIMATING: 'animating',
+    PAUSED:    'paused',
+    GAMEOVER:  'gameover'
 });
 
 /**
  * Number of tiles to place on initial board setup.
  * @type {number}
  */
-const INITIAL_TILE_COUNT = 5;
+const INITIAL_TILE_COUNT = 19;
 
 /**
  * Main game manager.
@@ -122,25 +123,55 @@ export class GameManager extends EventTarget {
 
     /**
      * Handle a tap on a hex coordinate.
-     * Performs merge, scoring, 128x destruction rule, refill, crown update, and game over check.
+     * Uses prepareMerge for step-by-step animated merging.
      * @param {import('../core/HexCoord.js').HexCoord} coord
      */
-    handleTap(coord) {
+    async handleTap(coord) {
         if (this.state !== GameState.PLAYING) return;
 
-        // Record previous max value for 128x destruction rule
-        const previousMax = this._getHighestValue();
-
-        const result = this.mergeSystem.tryMerge(coord);
+        const result = this.mergeSystem.prepareMerge(coord);
         if (!result || !result.success) return;
+
+        const previousMax = this._getHighestValue();
+        this._setState(GameState.ANIMATING);
+
+        const tapCell = this.grid.getCell(result.tapCoord);
+        const cellValue = result.baseValue;
+
+        // Step-by-step merge animation (deepest depth group first)
+        for (let i = 0; i < result.depthGroups.length; i++) {
+            const group = result.depthGroups[i];
+            const stepValue = result.stepValues[i];
+
+            // Clear source cells before animation (ghost cells handle the visual)
+            for (const c of group) {
+                this.grid.getCell(c).clear();
+            }
+
+            // Request animation and wait for completion
+            await new Promise((resolve) => {
+                this._dispatch('mergestep', {
+                    group,
+                    cellValue,
+                    tapCoord: result.tapCoord,
+                    stepValue,
+                    stepIndex: i,
+                    totalSteps: result.depthGroups.length,
+                    done: resolve
+                });
+            });
+
+            // Update tap cell to intermediate value
+            tapCell.setValue(stepValue);
+        }
 
         // Add score
         this.score.addScore(result.scoreGained);
 
-        // Dispatch merge event
+        // Dispatch merge event (SFX, score popup, effects)
         this._dispatch('merge', { result });
 
-        // 128x destruction rule: if new max block was created, destroy blocks <= maxValue/128
+        // 128x destruction rule
         if (result.resultValue > previousMax) {
             this.destroySmallBlocks(result.resultValue);
         }
@@ -152,7 +183,8 @@ export class GameManager extends EventTarget {
         // Update crowns
         this.updateCrowns();
 
-        // Check game over
+        // Resume playing and check game over
+        this._setState(GameState.PLAYING);
         this.checkGameOver();
     }
 

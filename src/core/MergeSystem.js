@@ -38,14 +38,14 @@ export class MergeSystem {
     }
 
     /**
-     * Attempt a merge starting from the tapped coordinate.
+     * Calculate a merge plan without modifying grid cells.
      * Uses BFS to find all connected cells with the same value,
-     * tracks depth for value calculation, and applies the merge.
+     * tracks depth for value calculation, and returns the merge result.
      *
      * @param {HexCoord} tapCoord
      * @returns {MergeResult|null} null if merge is not possible
      */
-    tryMerge(tapCoord) {
+    prepareMerge(tapCoord) {
         const tapCell = this._grid.getCell(tapCoord);
         if (!tapCell || tapCell.isEmpty) return null;
 
@@ -115,13 +115,6 @@ export class MergeSystem {
             stepValues.push(stepValue);
         }
 
-        // Clear all merged cells, then set final value at tap position
-        for (const key of visited) {
-            const coord = HexCoord.fromKey(key);
-            this._grid.getCell(coord).clear();
-        }
-        tapCell.setValue(mergedValue);
-
         // DepthGroups list: deepest first (reversed)
         const depthGroups = [];
         for (let d = maxDepth; d >= 1; d--) {
@@ -150,6 +143,26 @@ export class MergeSystem {
             depthGroups,
             parentMap
         };
+    }
+
+    /**
+     * Attempt a merge starting from the tapped coordinate.
+     * Calls prepareMerge() then immediately applies cell changes.
+     *
+     * @param {HexCoord} tapCoord
+     * @returns {MergeResult|null} null if merge is not possible
+     */
+    tryMerge(tapCoord) {
+        const result = this.prepareMerge(tapCoord);
+        if (!result) return null;
+
+        // Clear all merged cells, then set final value at tap position
+        for (const coord of result.mergedCoords) {
+            this._grid.getCell(coord).clear();
+        }
+        this._grid.getCell(tapCoord).setValue(result.resultValue);
+
+        return result;
     }
 
     /**

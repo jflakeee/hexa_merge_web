@@ -57,17 +57,17 @@ export class GameOverScreen {
 
         // --- Body ---
         const body = document.createElement('div');
-        body.style.cssText = 'background:#1a1a1e;padding:24px 20px 28px;text-align:center;border-radius:0 0 16px 16px;';
+        body.style.cssText = 'background:var(--card-bg, #1a1a1e);padding:24px 20px 28px;text-align:center;border-radius:0 0 16px 16px;';
 
         // GAME OVER title
         const title = document.createElement('div');
-        title.style.cssText = 'color:#888;font-size:14px;font-weight:700;letter-spacing:3px;margin-bottom:4px;';
+        title.style.cssText = 'color:var(--text-secondary, #888);font-size:14px;font-weight:700;letter-spacing:3px;margin-bottom:4px;';
         title.textContent = 'GAME OVER';
         body.appendChild(title);
 
         // SCORE label
         const scoreLabel = document.createElement('div');
-        scoreLabel.style.cssText = 'color:#FFF;font-size:14px;font-weight:700;letter-spacing:2px;margin-bottom:2px;';
+        scoreLabel.style.cssText = 'color:var(--text-primary, #FFF);font-size:14px;font-weight:700;letter-spacing:2px;margin-bottom:2px;';
         scoreLabel.textContent = 'SCORE';
         body.appendChild(scoreLabel);
 
@@ -110,13 +110,13 @@ export class GameOverScreen {
 
         // HI-SCORE label
         const hiLabel = document.createElement('div');
-        hiLabel.style.cssText = 'color:#888;font-size:12px;font-weight:700;letter-spacing:2px;margin-bottom:2px;';
+        hiLabel.style.cssText = 'color:var(--text-secondary, #888);font-size:12px;font-weight:700;letter-spacing:2px;margin-bottom:2px;';
         hiLabel.textContent = 'HI-SCORE';
         body.appendChild(hiLabel);
 
         // Hi-score value
         this._hiScoreEl = document.createElement('div');
-        this._hiScoreEl.style.cssText = 'color:#AAA;font-size:28px;font-weight:900;margin-bottom:24px;';
+        this._hiScoreEl.style.cssText = 'color:var(--text-secondary, #AAA);font-size:28px;font-weight:900;margin-bottom:24px;';
         this._hiScoreEl.textContent = '0';
         body.appendChild(this._hiScoreEl);
 

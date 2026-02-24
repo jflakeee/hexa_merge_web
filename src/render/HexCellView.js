@@ -158,11 +158,26 @@ export function drawCell(ctx, cx, cy, size, value, options = {}) {
 }
 
 // ----------------------------------------------------------
-// Empty Cell
+// Empty Cell (theme-aware)
 // ----------------------------------------------------------
 
+/** @type {string} */
+let _emptyCellFill = '#1a1a1e';
+/** @type {string} */
+let _emptyCellStroke = '#333333';
+
 /**
- * Draw an empty cell placeholder (dark gray hexagon).
+ * Update empty cell colors for theme switching.
+ * @param {string} fill - Fill color
+ * @param {string} stroke - Stroke color
+ */
+export function setEmptyCellColors(fill, stroke) {
+    _emptyCellFill = fill;
+    _emptyCellStroke = stroke;
+}
+
+/**
+ * Draw an empty cell placeholder hexagon.
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} cx
  * @param {number} cy
@@ -172,12 +187,11 @@ export function drawEmptyCell(ctx, cx, cy, size) {
     ctx.save();
 
     drawHexagon(ctx, cx, cy, size);
-    ctx.fillStyle = '#1a1a1e';
+    ctx.fillStyle = _emptyCellFill;
     ctx.fill();
 
-    // Subtle dark border
     drawHexagon(ctx, cx, cy, size);
-    ctx.strokeStyle = '#333333';
+    ctx.strokeStyle = _emptyCellStroke;
     ctx.lineWidth = 1;
     ctx.stroke();
 

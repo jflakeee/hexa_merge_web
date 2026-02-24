@@ -33,6 +33,13 @@ export class Renderer {
     _gridRadius;
 
     /**
+     * Gap factor: ratio of rendered hex size to layout hex size.
+     * 1.0 = no gap (tiles touch), 0.92 = 8% gap between tiles.
+     * @type {number}
+     */
+    _gapFactor;
+
+    /**
      * @param {HTMLCanvasElement} canvas
      * @param {number} [gridRadius=2]
      */
@@ -42,6 +49,7 @@ export class Renderer {
         this._dpr = window.devicePixelRatio || 1;
         this._gridRadius = gridRadius;
         this._hexSize = 40;
+        this._gapFactor = 0.92;
         this._offsetX = 0;
         this._offsetY = 0;
 
@@ -175,10 +183,11 @@ export class Renderer {
      * @param {import('../core/HexGrid.js').HexGrid} grid
      */
     _drawBackground(ctx, grid) {
+        const renderSize = this._hexSize * this._gapFactor;
         const allCells = grid.getAllCells();
         for (const cell of allCells) {
             const { x, y } = this.hexToPixel(cell.coord.q, cell.coord.r);
-            drawEmptyCell(ctx, x, y, this._hexSize);
+            drawEmptyCell(ctx, x, y, renderSize);
         }
     }
 
@@ -213,7 +222,7 @@ export class Renderer {
                 }
             }
 
-            drawCell(ctx, x + offX, y + offY, this._hexSize, cell.value, {
+            drawCell(ctx, x + offX, y + offY, this._hexSize * this._gapFactor, cell.value, {
                 hasCrown: cell.hasCrown,
                 scale,
                 alpha,
@@ -227,6 +236,16 @@ export class Renderer {
      * @param {import('../animation/TileAnimator.js').TileAnimator} animations
      */
     _drawAnimations(ctx, animations) {
+        // Ghost cells (step merge animation)
+        if (animations.ghostCells) {
+            for (const ghost of animations.ghostCells) {
+                drawCell(ctx, ghost.x, ghost.y, this._hexSize * this._gapFactor, ghost.value, {
+                    scale: ghost.scale,
+                    alpha: ghost.alpha,
+                });
+            }
+        }
+
         // Score popups
         if (animations.scorePopups) {
             for (const popup of animations.scorePopups) {

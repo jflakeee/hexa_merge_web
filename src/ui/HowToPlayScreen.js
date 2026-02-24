@@ -36,7 +36,7 @@ export class HowToPlayScreen {
 
         // --- Body ---
         const body = document.createElement('div');
-        body.style.cssText = 'background:#1a1a1e;padding:20px 16px 24px;border-radius:0 0 16px 16px;';
+        body.style.cssText = 'background:var(--card-bg, #1a1a1e);padding:20px 16px 24px;border-radius:0 0 16px 16px;';
 
         // Merge diagrams
         const examples = [
