@@ -122,6 +122,14 @@ export class GameManager extends EventTarget {
     }
 
     /**
+     * Callback for each merge step animation.
+     * Set by main.js to handle animation + SFX per step.
+     * Must return a Promise that resolves when the step animation is done.
+     * @type {function(Object): Promise<void>|null}
+     */
+    onMergeStep = null;
+
+    /**
      * Handle a tap on a hex coordinate.
      * Uses prepareMerge for step-by-step animated merging.
      * @param {import('../core/HexCoord.js').HexCoord} coord
@@ -148,9 +156,9 @@ export class GameManager extends EventTarget {
                 this.grid.getCell(c).clear();
             }
 
-            // Request animation and wait for completion
-            await new Promise((resolve) => {
-                this._dispatch('mergestep', {
+            // Await step animation callback (direct async call, not event-based)
+            if (this.onMergeStep) {
+                await this.onMergeStep({
                     group,
                     cellValue,
                     tapCoord: result.tapCoord,
@@ -158,9 +166,8 @@ export class GameManager extends EventTarget {
                     stepValue,
                     stepIndex: i,
                     totalSteps: result.depthGroups.length,
-                    done: resolve
                 });
-            });
+            }
 
             // Update tap cell to intermediate value
             tapCell.setValue(stepValue);
@@ -169,7 +176,7 @@ export class GameManager extends EventTarget {
         // Add score
         this.score.addScore(result.scoreGained);
 
-        // Dispatch merge event (SFX, score popup, effects)
+        // Dispatch merge event (score popup, effects)
         this._dispatch('merge', { result });
 
         // 128x destruction rule
