@@ -287,9 +287,12 @@ function initGame() {
 
     // 'merge' event - detail: { result: MergeResult }
     // Fires after all step animations complete (score popup, effects, stats)
-    // SFX is handled per-step in 'mergestep' handler above
     gameManager.addEventListener('merge', (e) => {
         const { result } = e.detail;
+
+        // Play numberUp SFX at the next pitch after the last merge step
+        const finalPitch = 1.0 + result.depthGroups.length * 0.18;
+        sfx.play('numberUp', 1, finalPitch);
 
         // Score popup animation at merge target position
         if (result.tapCoord) {
