@@ -267,11 +267,6 @@ function initGame() {
     gameManager.addEventListener('mergestep', async (e) => {
         const { group, cellValue, tapCoord, parentMap, stepValue, stepIndex, totalSteps, done } = e.detail;
 
-        // Play merge step SFX with increasing pitch per step
-        const pitchRate = 1.0 + stepIndex * 0.15;
-        const stepSoundName = sfx.getMergeSoundName(stepValue);
-        sfx.play(stepSoundName, 1, pitchRate);
-
         // Each cell moves toward its BFS parent (not directly to tapCoord)
         const pairs = group.map((c) => {
             const source = renderer.hexToPixel(c.q, c.r);
@@ -281,23 +276,25 @@ function initGame() {
             return { source, target };
         });
 
-        // Ghost cells slide from source to their respective parent (fast)
-        await animator.playStepMergeToParents(cellValue, pairs, 0.10);
+        // Ghost cells slide from source to their respective parent
+        await animator.playStepMergeToParents(cellValue, pairs, 0.12);
 
-        // Quick scale punch on target cell
-        await animator._playScalePunch(tapCoord.toKey(), 0.06);
+        // Play merge step SFX with increasing pitch AFTER slide completes
+        const pitchRate = 1.0 + stepIndex * 0.18;
+        const stepSoundName = sfx.getMergeSoundName(stepValue);
+        sfx.play(stepSoundName, 1, pitchRate);
+
+        // Scale punch on target cell
+        await animator._playScalePunch(tapCoord.toKey(), 0.08);
 
         done();
     });
 
     // 'merge' event - detail: { result: MergeResult }
-    // Fires after all step animations complete (SFX, score popup, effects, stats)
+    // Fires after all step animations complete (score popup, effects, stats)
+    // SFX is handled per-step in 'mergestep' handler above
     gameManager.addEventListener('merge', (e) => {
         const { result } = e.detail;
-
-        // Play merge SFX based on resulting tile value
-        const soundName = sfx.getMergeSoundName(result.resultValue);
-        sfx.play(soundName);
 
         // Score popup animation at merge target position
         if (result.tapCoord) {
