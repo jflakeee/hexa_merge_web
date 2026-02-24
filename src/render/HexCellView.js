@@ -21,7 +21,7 @@ import { formatValue } from '../core/TileHelper.js';
  * @param {number} size - Outer radius (center to vertex)
  */
 export function drawHexagon(ctx, cx, cy, size) {
-    const cornerRadius = size * 0.32;
+    const cornerRadius = size * 0.20;
 
     const vertices = [];
     for (let i = 0; i < 6; i++) {
