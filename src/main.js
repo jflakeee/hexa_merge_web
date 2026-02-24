@@ -290,9 +290,10 @@ function initGame() {
     gameManager.addEventListener('merge', (e) => {
         const { result } = e.detail;
 
-        // Play numberUp SFX at the next pitch after the last merge step
+        // Play merge SFX at the next pitch continuing from the last step
         const finalPitch = 1.0 + result.depthGroups.length * 0.18;
-        sfx.play('numberUp', 1, finalPitch);
+        const finalSoundName = sfx.getMergeSoundName(result.resultValue);
+        sfx.play(finalSoundName, 1, finalPitch);
 
         // Score popup animation at merge target position
         if (result.tapCoord) {
