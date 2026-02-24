@@ -182,32 +182,32 @@ export class ProceduralSFX {
     /** Merge basic (2-64) - C5 crystal tone */
     createMergeBasicSound() {
         const freq = 523.25; // C5
-        this.createBuffer('mergeBasic', 0.20, (t, p) => {
-            return this.crystalNote(freq, 0.20, t, p);
+        this.createBuffer('mergeBasic', 0.06, (t, p) => {
+            return this.crystalNote(freq, 0.06, t, p);
         }, 0.8);
     }
 
     /** Merge mid (128-512) - E5 crystal tone */
     createMergeMidSound() {
         const freq = 659.25; // E5
-        this.createBuffer('mergeMid', 0.20, (t, p) => {
-            return this.crystalNote(freq, 0.20, t, p);
+        this.createBuffer('mergeMid', 0.06, (t, p) => {
+            return this.crystalNote(freq, 0.06, t, p);
         }, 0.8);
     }
 
     /** Merge high (1024-4096) - G5 crystal tone */
     createMergeHighSound() {
         const freq = 783.99; // G5
-        this.createBuffer('mergeHigh', 0.25, (t, p) => {
-            return this.crystalNote(freq, 0.25, t, p);
+        this.createBuffer('mergeHigh', 0.06, (t, p) => {
+            return this.crystalNote(freq, 0.06, t, p);
         }, 0.85);
     }
 
     /** Merge ultra (8192+) - C6 crystal tone */
     createMergeUltraSound() {
         const freq = 1046.5; // C6
-        this.createBuffer('mergeUltra', 0.25, (t, p) => {
-            return this.crystalNote(freq, 0.25, t, p);
+        this.createBuffer('mergeUltra', 0.06, (t, p) => {
+            return this.crystalNote(freq, 0.06, t, p);
         }, 0.9);
     }
 
