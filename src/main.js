@@ -262,10 +262,15 @@ function initGame() {
     // GameManager event wiring (EventTarget / CustomEvent API)
     // ----------------------------------------------------------
 
-    // 'mergestep' event - detail: { group, cellValue, tapCoord, parentMap, stepValue, done }
+    // 'mergestep' event - detail: { group, cellValue, tapCoord, parentMap, stepValue, stepIndex, totalSteps, done }
     // Handles step-by-step merge animation (ghost cells slide to BFS parent)
     gameManager.addEventListener('mergestep', async (e) => {
-        const { group, cellValue, tapCoord, parentMap, done } = e.detail;
+        const { group, cellValue, tapCoord, parentMap, stepValue, stepIndex, totalSteps, done } = e.detail;
+
+        // Play merge step SFX with increasing pitch per step
+        const pitchRate = 1.0 + stepIndex * 0.15;
+        const stepSoundName = sfx.getMergeSoundName(stepValue);
+        sfx.play(stepSoundName, 1, pitchRate);
 
         // Each cell moves toward its BFS parent (not directly to tapCoord)
         const pairs = group.map((c) => {
@@ -276,11 +281,11 @@ function initGame() {
             return { source, target };
         });
 
-        // Ghost cells slide from source to their respective parent
-        await animator.playStepMergeToParents(cellValue, pairs, 0.18);
+        // Ghost cells slide from source to their respective parent (fast)
+        await animator.playStepMergeToParents(cellValue, pairs, 0.10);
 
-        // Scale punch on target cell
-        await animator._playScalePunch(tapCoord.toKey(), 0.1);
+        // Quick scale punch on target cell
+        await animator._playScalePunch(tapCoord.toKey(), 0.06);
 
         done();
     });

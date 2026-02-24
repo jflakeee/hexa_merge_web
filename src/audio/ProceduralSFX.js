@@ -131,8 +131,9 @@ export class ProceduralSFX {
      * Play a previously created buffer by name.
      * @param {string} name - The SFX buffer name
      * @param {number} [volume=1] - Volume multiplier (combined with stored volume)
+     * @param {number} [rate=1] - Playback rate (pitch multiplier, 1=normal, >1=higher pitch)
      */
-    play(name, volume = 1) {
+    play(name, volume = 1, rate = 1) {
         if (this.muted) return;
         if (!this.audioContext) return;
 
@@ -141,6 +142,7 @@ export class ProceduralSFX {
 
         const source = this.audioContext.createBufferSource();
         source.buffer = entry.buffer;
+        source.playbackRate.value = rate;
 
         const gainNode = this.audioContext.createGain();
         gainNode.gain.value = entry.volume * volume;
