@@ -4,7 +4,7 @@
  * text labels, crown icons, and highlight effects.
  */
 
-import { getColor, getTextColor } from '../config/tileColors.js';
+import { getColor } from '../config/tileColors.js';
 import { formatValue } from '../core/TileHelper.js';
 
 // ----------------------------------------------------------
@@ -86,14 +86,12 @@ function lightenColor(hex, factor) {
  * @param {boolean} [options.hasCrown=false]
  * @param {number} [options.scale=1]
  * @param {number} [options.alpha=1]
- * @param {boolean} [options.highlight=true]
  */
 export function drawCell(ctx, cx, cy, size, value, options = {}) {
     const {
         hasCrown = false,
         scale = 1,
         alpha = 1,
-        highlight = true,
     } = options;
 
     if (value <= 0) return;
@@ -104,10 +102,10 @@ export function drawCell(ctx, cx, cy, size, value, options = {}) {
     ctx.save();
     ctx.globalAlpha = alpha;
 
-    // --- Background gradient (bright top-left to darker bottom-right) ---
+    // --- Flat fill with very subtle gradient (5% variation) ---
     const bgColor = getColor(value);
-    const lightBg = lightenColor(bgColor, 0.2);
-    const darkBg = darkenColor(bgColor, 0.2);
+    const lightBg = lightenColor(bgColor, 0.05);
+    const darkBg = darkenColor(bgColor, 0.05);
 
     const grad = ctx.createLinearGradient(
         cx - effectiveSize, cy - effectiveSize,
@@ -120,43 +118,33 @@ export function drawCell(ctx, cx, cy, size, value, options = {}) {
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // --- Border stroke (slightly darker than background) ---
-    const borderColor = darkenColor(bgColor, 0.35);
+    // --- Thick black border ---
     drawHexagon(ctx, cx, cy, effectiveSize);
-    ctx.strokeStyle = borderColor;
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 3;
     ctx.stroke();
 
-    // --- Highlight: top-half semi-transparent white gradient (glass effect) ---
-    if (highlight) {
-        ctx.save();
-        drawHexagon(ctx, cx, cy, effectiveSize);
-        ctx.clip();
-
-        const hlGrad = ctx.createLinearGradient(cx, cy - effectiveSize, cx, cy);
-        hlGrad.addColorStop(0, 'rgba(255,255,255,0.35)');
-        hlGrad.addColorStop(1, 'rgba(255,255,255,0.0)');
-        ctx.fillStyle = hlGrad;
-        ctx.fillRect(cx - effectiveSize, cy - effectiveSize, effectiveSize * 2, effectiveSize);
-        ctx.restore();
-    }
-
-    // --- Text: formatValue(value) with dynamic font size ---
+    // --- Text: formatValue(value) - bold white with strong contrast ---
     const display = formatValue(value);
     if (display) {
-        const textColor = getTextColor(value);
         const len = display.length;
         let fontSize;
-        if (len <= 1) fontSize = effectiveSize * 0.7;
-        else if (len <= 2) fontSize = effectiveSize * 0.55;
-        else if (len <= 3) fontSize = effectiveSize * 0.45;
-        else fontSize = effectiveSize * 0.35;
+        if (len <= 1) fontSize = effectiveSize * 0.75;
+        else if (len <= 2) fontSize = effectiveSize * 0.6;
+        else if (len <= 3) fontSize = effectiveSize * 0.5;
+        else fontSize = effectiveSize * 0.38;
 
-        ctx.fillStyle = textColor;
         ctx.font = `bold ${Math.round(fontSize)}px 'Nunito ExtraBold', 'Nunito', 'Arial Black', sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(display, cx, cy + 1); // +1 for visual centering
+
+        // Dark outline for contrast
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 2;
+        ctx.strokeText(display, cx, cy + 1);
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(display, cx, cy + 1);
     }
 
     // --- Crown icon above the cell ---
@@ -184,13 +172,13 @@ export function drawEmptyCell(ctx, cx, cy, size) {
     ctx.save();
 
     drawHexagon(ctx, cx, cy, size);
-    ctx.fillStyle = '#383840';
+    ctx.fillStyle = '#1a1a1e';
     ctx.fill();
 
-    // Subtle border
+    // Subtle dark border
     drawHexagon(ctx, cx, cy, size);
-    ctx.strokeStyle = '#2a2a30';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#333333';
+    ctx.lineWidth = 1;
     ctx.stroke();
 
     ctx.restore();

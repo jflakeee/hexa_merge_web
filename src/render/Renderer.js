@@ -217,7 +217,6 @@ export class Renderer {
                 hasCrown: cell.hasCrown,
                 scale,
                 alpha,
-                highlight: true,
             });
         }
     }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Hexa Merge</title>
+  <title>XUP</title>
   <style>
     /* Global reset + game layout */
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -15,12 +15,13 @@
     #hud { position: relative; z-index: 10; padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left)); display: flex; justify-content: space-between; align-items: flex-start; width: 100%; flex-shrink: 0; }
     #hud-left, #hud-right { display: flex; gap: 8px; }
     #score-container { text-align: center; flex: 1; }
-    #game-title { color: #FF69B4; font-size: 20px; font-weight: 900; letter-spacing: 4px; }
-    #score { color: #FF69B4; font-size: 48px; font-weight: 900; }
-    #hi-score-label { color: #666; font-size: 12px; }
-    #hi-score { color: #888; font-size: 16px; font-weight: 700; }
+    #game-title { font-size: 32px; font-weight: 900; letter-spacing: 2px; }
+    #score-label { color: #FFF; font-size: 16px; font-weight: 900; letter-spacing: 2px; }
+    #score { color: #E91E63; font-size: 56px; font-weight: 900; }
+    #hi-score-label { color: #888; font-size: 14px; letter-spacing: 1px; }
+    #hi-score { color: #888; font-size: 24px; font-weight: 900; }
 
-    .hud-btn { width: 44px; height: 44px; min-width: 44px; min-height: 44px; border-radius: 50%; border: 2px solid #444; background: transparent; color: #888; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
+    .hud-btn { width: 44px; height: 44px; min-width: 44px; min-height: 44px; background: #E91E63; color: #FFF; font-size: 16px; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%); }
     .hud-btn:active { transform: scale(0.9); }
 
     /* Canvas */
@@ -29,14 +30,14 @@
     /* Screen overlay common */
     .screen-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; z-index: 50; background: rgba(0,0,0,0.85); opacity: 0; transition: opacity 0.3s ease; flex-direction: column; gap: 20px; padding-bottom: env(safe-area-inset-bottom, 0px); }
     .screen-overlay.active { display: flex; opacity: 1; }
-    .screen-overlay h2 { color: #FF69B4; font-size: 32px; font-weight: 900; }
+    .screen-overlay h2 { color: #E91E63; font-size: 32px; font-weight: 900; }
     .screen-overlay .score-display { color: #FFF; font-size: 48px; font-weight: 900; }
     .screen-overlay .label { color: #888; font-size: 14px; }
     .screen-overlay .new-record { color: #FFD700; font-size: 18px; font-weight: 700; animation: pulse 1s infinite; }
 
     .overlay-btn { padding: 12px 32px; border-radius: 25px; border: none; font-size: 18px; font-weight: 700; cursor: pointer; transition: transform 0.1s; min-height: 44px; }
     .overlay-btn:active { transform: scale(0.95); }
-    .overlay-btn.primary { background: #FF69B4; color: #FFF; }
+    .overlay-btn.primary { background: #E91E63; color: #FFF; }
     .overlay-btn.secondary { background: #333; color: #FFF; border: 2px solid #555; }
 
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
@@ -44,15 +45,16 @@
     /* Loading screen */
     #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.5s; }
     #loading-screen.hidden { opacity: 0; pointer-events: none; }
-    #loading-title { color: #FF69B4; font-size: 48px; font-weight: 900; letter-spacing: 8px; }
+    #loading-title { font-size: 48px; font-weight: 900; letter-spacing: 8px; }
     #loading-text { color: #666; font-size: 14px; margin-top: 20px; }
 
     /* Mobile responsive breakpoints */
     @media (max-width: 480px) {
-      #game-title { font-size: 16px; letter-spacing: 2px; }
-      #score { font-size: 40px; }
-      #hi-score { font-size: 14px; }
-      #hi-score-label { font-size: 11px; }
+      #game-title { font-size: 24px; letter-spacing: 1px; }
+      #score-label { font-size: 14px; }
+      #score { font-size: 44px; }
+      #hi-score { font-size: 20px; }
+      #hi-score-label { font-size: 12px; }
       #hud { padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left)); }
       .screen-overlay h2 { font-size: 26px; }
       .screen-overlay .score-display { font-size: 40px; }
@@ -60,19 +62,22 @@
       #loading-title { font-size: 36px; letter-spacing: 4px; }
     }
     @media (max-width: 360px) {
-      #game-title { font-size: 14px; letter-spacing: 1px; }
-      #score { font-size: 32px; }
-      #hi-score { font-size: 12px; }
-      .hud-btn { width: 40px; height: 40px; min-width: 40px; min-height: 40px; font-size: 16px; }
+      #game-title { font-size: 20px; letter-spacing: 1px; }
+      #score-label { font-size: 12px; }
+      #score { font-size: 36px; }
+      #hi-score { font-size: 16px; }
+      #hi-score-label { font-size: 11px; }
+      .hud-btn { width: 40px; height: 40px; min-width: 40px; min-height: 40px; font-size: 14px; }
       .screen-overlay h2 { font-size: 22px; }
       .screen-overlay .score-display { font-size: 32px; }
       .overlay-btn { padding: 8px 20px; font-size: 15px; }
       #loading-title { font-size: 28px; letter-spacing: 2px; }
     }
     @media (max-width: 320px) {
-      #game-title { font-size: 12px; }
-      #score { font-size: 26px; }
-      #hi-score { font-size: 11px; }
+      #game-title { font-size: 16px; }
+      #score-label { font-size: 11px; }
+      #score { font-size: 28px; }
+      #hi-score { font-size: 14px; }
       .screen-overlay h2 { font-size: 18px; }
       .screen-overlay .score-display { font-size: 26px; }
       #loading-title { font-size: 24px; letter-spacing: 1px; }
@@ -87,9 +92,10 @@
         <button class="hud-btn" id="btn-sound" title="Sound">&#x1F50A;</button>
       </div>
       <div id="score-container">
-        <div id="game-title">HEXA MERGE</div>
+        <div id="game-title"><span style="color:#FFF">X</span><span style="color:#E91E63">UP</span></div>
+        <div id="score-label">SCORE</div>
         <div id="score">0</div>
-        <div id="hi-score-label">BEST</div>
+        <div id="hi-score-label">HI-SCORE</div>
         <div id="hi-score">0</div>
       </div>
       <div id="hud-right">
@@ -109,7 +115,7 @@
 
   <!-- Loading Screen -->
   <div id="loading-screen">
-    <div id="loading-title">HEXA MERGE</div>
+    <div id="loading-title"><span style="color:#FFF">X</span><span style="color:#E91E63">UP</span></div>
     <div id="loading-text">Tap to start</div>
   </div>
 

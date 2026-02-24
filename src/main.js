@@ -221,7 +221,9 @@ function initGame() {
             const currentScore = gameManager.score.currentScore;
             const highScore = gameManager.score.highScore;
             const isNewRecord = currentScore > highScore;
-            gameOverScreen.show(currentScore, highScore, isNewRecord);
+            const highestCell = gameManager.grid.getHighestValueCell();
+            const maxTileValue = highestCell ? highestCell.value : 0;
+            gameOverScreen.show(currentScore, highScore, isNewRecord, maxTileValue);
             screenManager.showScreen('gameover');
         }
     });

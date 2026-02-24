@@ -51,11 +51,11 @@ export class HUDManager {
         const len = formatted.length;
         let basePx;
         if (len <= 3) {
-            basePx = 48;
+            basePx = 56;
         } else if (len <= 6) {
-            basePx = 36;
+            basePx = 42;
         } else {
-            basePx = 28;
+            basePx = 32;
         }
 
         // Viewport-based scale factor for small screens
@@ -87,7 +87,7 @@ export class HUDManager {
      */
     setSoundIcon(muted) {
         if (!this._btnSound) return;
-        this._btnSound.textContent = muted ? '\u{1F507}' : '\u{1F50A}';
+        this._btnSound.textContent = muted ? '\u2715' : '\u266A';
     }
 
     /**
