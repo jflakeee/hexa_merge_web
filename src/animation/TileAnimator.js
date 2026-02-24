@@ -375,6 +375,36 @@ export class TileAnimator {
     }
 
     /**
+     * Play a step merge animation where each ghost cell slides to its own parent position.
+     * @param {number} value - Tile value to display on ghost cells
+     * @param {Array<{source: {x:number,y:number}, target: {x:number,y:number}}>} pairs
+     * @param {number} [duration=0.2]
+     * @returns {Promise<void>}
+     */
+    playStepMergeToParents(value, pairs, duration = 0.2) {
+        const promises = pairs.map(({ source, target }) => {
+            return new Promise((resolve) => {
+                this.ghostCells.push({
+                    value,
+                    startX: source.x,
+                    startY: source.y,
+                    x: source.x,
+                    y: source.y,
+                    targetX: target.x,
+                    targetY: target.y,
+                    duration,
+                    elapsed: 0,
+                    scale: 1,
+                    alpha: 1,
+                    resolve,
+                });
+            });
+        });
+
+        return Promise.all(promises);
+    }
+
+    /**
      * Internal: play a scale punch on a cell (1 -> 1.3 -> 1).
      * @param {string} coordKey
      * @param {number} [duration=0.15]

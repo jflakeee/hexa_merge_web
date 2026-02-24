@@ -154,6 +154,7 @@ export class GameManager extends EventTarget {
                     group,
                     cellValue,
                     tapCoord: result.tapCoord,
+                    parentMap: result.parentMap,
                     stepValue,
                     stepIndex: i,
                     totalSteps: result.depthGroups.length,

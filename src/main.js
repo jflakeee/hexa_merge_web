@@ -21,6 +21,7 @@ import { StatsScreen } from './ui/StatsScreen.js';
 import * as SaveSystem from './game/SaveSystem.js';
 import * as StatsSystem from './game/StatsSystem.js';
 import { setEmptyCellColors } from './render/HexCellView.js';
+import { HexCoord } from './core/HexCoord.js';
 // ============================================================
 // DOM References
 // ============================================================
@@ -261,16 +262,22 @@ function initGame() {
     // GameManager event wiring (EventTarget / CustomEvent API)
     // ----------------------------------------------------------
 
-    // 'mergestep' event - detail: { group, cellValue, tapCoord, stepValue, done }
-    // Handles step-by-step merge animation (ghost cells slide to target)
+    // 'mergestep' event - detail: { group, cellValue, tapCoord, parentMap, stepValue, done }
+    // Handles step-by-step merge animation (ghost cells slide to BFS parent)
     gameManager.addEventListener('mergestep', async (e) => {
-        const { group, cellValue, tapCoord, done } = e.detail;
+        const { group, cellValue, tapCoord, parentMap, done } = e.detail;
 
-        const sourcePositions = group.map((c) => renderer.hexToPixel(c.q, c.r));
-        const targetPosition = renderer.hexToPixel(tapCoord.q, tapCoord.r);
+        // Each cell moves toward its BFS parent (not directly to tapCoord)
+        const pairs = group.map((c) => {
+            const source = renderer.hexToPixel(c.q, c.r);
+            const parentKey = parentMap.get(c.toKey());
+            const parentCoord = HexCoord.fromKey(parentKey);
+            const target = renderer.hexToPixel(parentCoord.q, parentCoord.r);
+            return { source, target };
+        });
 
-        // Ghost cells slide from source positions to target
-        await animator.playStepMerge(cellValue, sourcePositions, targetPosition, 0.18);
+        // Ghost cells slide from source to their respective parent
+        await animator.playStepMergeToParents(cellValue, pairs, 0.18);
 
         // Scale punch on target cell
         await animator._playScalePunch(tapCoord.toKey(), 0.1);
