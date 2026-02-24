@@ -12,25 +12,40 @@ import { formatValue } from '../core/TileHelper.js';
 // ----------------------------------------------------------
 
 /**
- * Draw a flat-top hexagon path on the given context.
+ * Draw a flat-top hexagon path with rounded corners on the given context.
  * Vertices at 0, 60, 120, 180, 240, 300 degrees.
+ * Corner rounding uses arcTo for smooth radius at each vertex.
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} cx - Center x
  * @param {number} cy - Center y
  * @param {number} size - Outer radius (center to vertex)
  */
 export function drawHexagon(ctx, cx, cy, size) {
-    ctx.beginPath();
+    const cornerRadius = size * 0.32;
+
+    const vertices = [];
     for (let i = 0; i < 6; i++) {
-        const angleDeg = 60 * i;
-        const angleRad = (Math.PI / 180) * angleDeg;
-        const vx = cx + size * Math.cos(angleRad);
-        const vy = cy + size * Math.sin(angleRad);
-        if (i === 0) {
-            ctx.moveTo(vx, vy);
-        } else {
-            ctx.lineTo(vx, vy);
-        }
+        const angleRad = (Math.PI / 180) * (60 * i);
+        vertices.push({
+            x: cx + size * Math.cos(angleRad),
+            y: cy + size * Math.sin(angleRad)
+        });
+    }
+
+    ctx.beginPath();
+    // Start at midpoint between last vertex and first vertex
+    ctx.moveTo(
+        (vertices[5].x + vertices[0].x) / 2,
+        (vertices[5].y + vertices[0].y) / 2
+    );
+
+    for (let i = 0; i < 6; i++) {
+        const next = (i + 1) % 6;
+        ctx.arcTo(
+            vertices[i].x, vertices[i].y,
+            vertices[next].x, vertices[next].y,
+            cornerRadius
+        );
     }
     ctx.closePath();
 }

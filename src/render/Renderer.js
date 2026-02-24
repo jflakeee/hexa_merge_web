@@ -49,7 +49,7 @@ export class Renderer {
         this._dpr = window.devicePixelRatio || 1;
         this._gridRadius = gridRadius;
         this._hexSize = 40;
-        this._gapFactor = 0.92;
+        this._gapFactor = 0.94;
         this._offsetX = 0;
         this._offsetY = 0;
 
