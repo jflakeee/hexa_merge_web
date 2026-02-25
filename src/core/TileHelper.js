@@ -89,6 +89,37 @@ export function formatValue(value) {
     return Math.floor(value).toString();
 }
 
+/**
+ * Format a score value for popup display with 2 decimal places on SI suffixes.
+ * e.g. 1536 -> "1.53k", 2621440 -> "2.62m"
+ * Values below 1000 are shown as integers.
+ * @param {number} value
+ * @returns {string}
+ */
+export function formatScore(value) {
+    if (value <= 0) return '0';
+
+    while (value >= 1e33) {
+        value /= 1e33;
+    }
+
+    const suffixes = [
+        [1e30, 'q'], [1e27, 'r'], [1e24, 'y'], [1e21, 'z'],
+        [1e18, 'e'], [1e15, 'p'], [1e12, 't'], [1e9, 'g'],
+        [1e6, 'm'],  [1e3, 'k'],
+    ];
+
+    for (const [threshold, suffix] of suffixes) {
+        if (value >= threshold) {
+            const num = value / threshold;
+            // Drop trailing zeros: 2.00 -> "2", 2.50 -> "2.5", 2.53 -> "2.53"
+            return parseFloat(num.toFixed(2)) + suffix;
+        }
+    }
+
+    return Math.floor(value).toString();
+}
+
 // ----------------------------------------------------------
 // Random tile generation
 // ----------------------------------------------------------
