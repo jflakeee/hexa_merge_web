@@ -5,6 +5,7 @@
  */
 
 import { formatValue } from '../core/TileHelper.js';
+import { setScoreText } from '../core/ScoreFormatter.js';
 
 export class StatsScreen {
     constructor() {
@@ -44,10 +45,10 @@ export class StatsScreen {
         const stats = [
             { key: 'totalGames', label: 'Games Played', format: 'number' },
             { key: 'totalMerges', label: 'Total Merges', format: 'number' },
-            { key: 'highScore', label: 'High Score', format: 'number' },
+            { key: 'highScore', label: 'High Score', format: 'score' },
             { key: 'highestTile', label: 'Highest Tile', format: 'tile' },
             { key: 'longestChain', label: 'Longest Chain', format: 'number' },
-            { key: 'totalScore', label: 'Total Score', format: 'number' },
+            { key: 'totalScore', label: 'Total Score', format: 'score' },
         ];
 
         for (const stat of stats) {
@@ -92,6 +93,10 @@ export class StatsScreen {
         for (const [key, entry] of Object.entries(this._els)) {
             const val = stats[key];
             if (val !== undefined) {
+                if (entry.format === 'score') {
+                    setScoreText(entry.el, val);
+                    continue;
+                }
                 entry.el.textContent = entry.format === 'tile'
                     ? formatValue(val)
                     : val.toLocaleString();

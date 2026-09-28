@@ -356,10 +356,9 @@ function initGame() {
 
     // 'crownchange' event - detail: { crownCoords: HexCoord[] }
     gameManager.addEventListener('crownchange', (e) => {
-        const { crownCoords } = e.detail;
-        if (crownCoords && crownCoords.length > 0) {
-            sfx.play('crownChange');
-        }
+        const { playSound, soundVariant, reason } = e.detail;
+        if (['init', 'restore', 'reset'].includes(reason)) sfx.stopCrown();
+        if (playSound) sfx.play(soundVariant === 'upgrade' ? 'crownUpgrade' : 'crownChange');
     });
 
     // Restore saved game or start new

@@ -13,6 +13,7 @@ export class ProceduralSFX {
         this.buffers = {};
         /** @type {boolean} */
         this.muted = false;
+        this._crownVoice = null;
     }
 
     /**
@@ -135,7 +136,7 @@ export class ProceduralSFX {
      */
     play(name, volume = 1, rate = 1) {
         if (this.muted) return;
-        if (!this.audioContext) return;
+        if (!this.audioContext || this.audioContext.state !== 'running') return;
 
         const entry = this.buffers[name];
         if (!entry) return;
@@ -149,7 +150,28 @@ export class ProceduralSFX {
 
         source.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
+        const isCrown = name === 'crownChange' || name === 'crownUpgrade';
+        if (isCrown) {
+            this.stopCrown(0.03);
+            this._crownVoice = { source, gainNode };
+        }
+        source.onended = () => {
+            source.disconnect();
+            gainNode.disconnect();
+            if (this._crownVoice?.source === source) this._crownVoice = null;
+        };
         source.start(0);
+    }
+
+    stopCrown(fade = 0) {
+        const voice = this._crownVoice;
+        if (!voice) return;
+        this._crownVoice = null;
+        const now = this.audioContext.currentTime;
+        voice.gainNode.gain.cancelScheduledValues(now);
+        voice.gainNode.gain.setValueAtTime(fade ? voice.gainNode.gain.value : 0, now);
+        if (fade) voice.gainNode.gain.linearRampToValueAtTime(0, now + fade);
+        voice.source.stop(now + fade);
     }
 
     /**
@@ -158,6 +180,7 @@ export class ProceduralSFX {
      */
     setMuted(muted) {
         this.muted = muted;
+        if (muted) this.stopCrown();
     }
 
     /**
@@ -237,17 +260,27 @@ export class ProceduralSFX {
         }, 0.75);
     }
 
-    /** Crown change - Cmaj7 chord (C5, E5, G5, B5) */
+    /** Soft staggered Cmaj7 chimes, with an upper octave for an upgrade. */
     createCrownChangeSound() {
-        const freqs = [523.25, 659.25, 783.99, 987.77]; // C5, E5, G5, B5
-        const duration = 0.20;
-        this.createBuffer('crownChange', duration, (t, p) => {
-            let sum = 0;
-            for (let i = 0; i < freqs.length; i++) {
-                sum += this.crystalNote(freqs[i], duration, t, p) * 0.25;
-            }
-            return sum;
-        }, 0.85);
+        for (const [name, duration, freqs] of [
+            ['crownChange', 0.45, [523.25, 659.25, 783.99, 987.77]],
+            ['crownUpgrade', 0.60, [523.25, 659.25, 783.99, 987.77, 1046.5]],
+        ]) {
+            this.createBuffer(name, duration, t => {
+                let sum = 0;
+                freqs.forEach((freq, i) => {
+                    const local = t - i * 0.032;
+                    if (local < 0) return;
+                    const envelope = Math.min(local / 0.012, 1)
+                        * Math.exp(-6 * local / duration)
+                        * Math.min((duration - t) / 0.04, 1);
+                    const phase = 2 * Math.PI * freq * local;
+                    sum += envelope * (Math.sin(phase) + 0.12 * Math.sin(phase * 2.76))
+                        * (i === 4 ? 0.55 : 1) / freqs.length;
+                });
+                return sum;
+            }, 0.55);
+        }
     }
 
     /** Game over - E4->C4->A3 descending tones */

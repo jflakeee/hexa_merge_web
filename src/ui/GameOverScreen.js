@@ -6,6 +6,7 @@
  */
 
 import { formatValue } from '../core/TileHelper.js';
+import { setScoreText } from '../core/ScoreFormatter.js';
 import { getColor } from '../config/tileColors.js';
 
 export class GameOverScreen {
@@ -161,8 +162,8 @@ export class GameOverScreen {
     show(score, highScore, isNewRecord, maxTileValue = 0) {
         if (!this._container) return;
 
-        this._scoreEl.textContent = formatValue(score);
-        this._hiScoreEl.textContent = formatValue(highScore);
+        setScoreText(this._scoreEl, score);
+        setScoreText(this._hiScoreEl, highScore);
 
         if (isNewRecord) {
             this._newRecordEl.style.display = 'block';

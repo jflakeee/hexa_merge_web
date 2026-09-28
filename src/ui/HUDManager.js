@@ -5,7 +5,7 @@
  * ES Module - pure web implementation.
  */
 
-import { formatValue } from '../core/TileHelper.js';
+import { formatScore, setScoreText } from '../core/ScoreFormatter.js';
 
 export class HUDManager {
     constructor() {
@@ -38,14 +38,14 @@ export class HUDManager {
      * - 1-3 digits: 48px
      * - 4-6 digits: 36px
      * - 7+ digits: 28px
-     * Uses formatValue for large number abbreviation.
+     * Uses formatScore for large number abbreviation.
      * @param {number} score
      */
     updateScore(score) {
         if (!this._scoreEl) return;
 
-        const formatted = formatValue(score);
-        this._scoreEl.textContent = formatted;
+        const formatted = formatScore(score);
+        setScoreText(this._scoreEl, score);
 
         // Dynamic font size based on character length
         const len = formatted.length;
@@ -78,7 +78,7 @@ export class HUDManager {
      */
     updateHighScore(score) {
         if (!this._hiScoreEl) return;
-        this._hiScoreEl.textContent = formatValue(score);
+        setScoreText(this._hiScoreEl, score);
     }
 
     /**

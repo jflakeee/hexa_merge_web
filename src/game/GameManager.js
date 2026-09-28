@@ -59,6 +59,7 @@ export class GameManager extends EventTarget {
         this.mergeSystem = new MergeSystem(this.grid);
         this.score = new ScoreManager();
         this.state = GameState.READY;
+        this._crownState = { highestValue: 0, key: '' };
 
         // Wire up score callbacks to dispatch events
         this.score.onScoreChanged.push((current) => {
@@ -104,7 +105,7 @@ export class GameManager extends EventTarget {
             attempts++;
         } while (!this.grid.hasValidMerge() && attempts < 100);
 
-        this.updateCrowns();
+        this.updateCrowns('init');
         this._setState(GameState.PLAYING);
     }
 
@@ -117,7 +118,7 @@ export class GameManager extends EventTarget {
         this.score.reset();
         this.score.currentScore = data.score;
         this.score._notifyScoreChanged();
-        this.updateCrowns();
+        this.updateCrowns('restore');
         this._setState(GameState.PLAYING);
     }
 
@@ -239,7 +240,7 @@ export class GameManager extends EventTarget {
     /**
      * Update crown flags: only the cell(s) with the highest value get crowns.
      */
-    updateCrowns() {
+    updateCrowns(reason = 'merge') {
         const allCells = this.grid.getAllCells();
         let highestValue = 0;
 
@@ -258,7 +259,15 @@ export class GameManager extends EventTarget {
             }
         }
 
-        this._dispatch('crownchange', { crownCoords });
+        const key = crownCoords.map(c => `${c.q},${c.r}`).sort().join(';');
+        const previousHighestValue = this._crownState.highestValue;
+        const changed = highestValue !== previousHighestValue || key !== this._crownState.key;
+        this._crownState = { highestValue, key };
+        this._dispatch('crownchange', {
+            crownCoords, previousHighestValue, highestValue, changed, reason,
+            playSound: changed && highestValue > 0 && ['merge', 'continue'].includes(reason),
+            soundVariant: highestValue > previousHighestValue ? 'upgrade' : 'basic',
+        });
     }
 
     /**
@@ -299,7 +308,7 @@ export class GameManager extends EventTarget {
         // Refill empty cells, update crowns, and resume
         const filledCells = this.fillAllEmptyCells(false);
         this._dispatch('newtiles', { cells: filledCells });
-        this.updateCrowns();
+        this.updateCrowns('continue');
         this._setState(GameState.PLAYING);
         this.checkGameOver();
     }

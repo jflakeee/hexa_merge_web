@@ -36,17 +36,21 @@
     #game-container { width: 100%; height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; }
 
     /* HUD */
-    #hud { position: relative; z-index: 10; padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left)); display: flex; justify-content: space-between; align-items: flex-start; width: 100%; flex-shrink: 0; }
-    #hud-left, #hud-right { display: flex; gap: 8px; }
-    #score-container { text-align: center; flex: 1; }
-    #game-title { font-size: 32px; font-weight: 900; letter-spacing: 2px; }
+    #hud { position: relative; z-index: 10; padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left)); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr); column-gap: 8px; align-items: start; width: 100%; flex-shrink: 0; }
+    #hud-left, #hud-right { display: flex; align-items: center; gap: 8px; min-height: 48px; }
+    #hud-left { justify-content: flex-start; }
+    #hud-right { justify-content: flex-end; }
+    #score-container { text-align: center; min-width: 0; }
+    #game-title { font-size: 32px; font-weight: 900; letter-spacing: 2px; min-height: 48px; display: flex; justify-content: center; align-items: center; white-space: nowrap; }
+    #score, #hi-score { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
     #score-label { color: var(--text-primary); font-size: 16px; font-weight: 900; letter-spacing: 2px; }
     #score { color: var(--accent); font-size: 56px; font-weight: 900; }
     #hi-score-label { color: var(--text-secondary); font-size: 14px; letter-spacing: 1px; }
     #hi-score { color: var(--text-secondary); font-size: 24px; font-weight: 900; }
 
-    .hud-btn { width: 44px; height: 44px; min-width: 44px; min-height: 44px; background: #E91E63; color: #FFF; font-size: 16px; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%); }
+    .hud-btn { width: 48px; height: 48px; min-width: 48px; min-height: 48px; background: #E91E63; color: #FFF; font-size: 16px; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%); }
     .hud-btn:active { transform: scale(0.9); }
+    .hud-btn:focus-visible { background: #880E4F; box-shadow: inset 0 0 0 4px #FFF; }
 
     /* Canvas */
     #game-canvas { flex: 1; width: 100%; touch-action: none; }
@@ -96,7 +100,7 @@
       #score { font-size: 36px; }
       #hi-score { font-size: 16px; }
       #hi-score-label { font-size: 11px; }
-      .hud-btn { width: 40px; height: 40px; min-width: 40px; min-height: 40px; font-size: 14px; }
+      #hud { grid-template-columns: 104px minmax(0, 1fr) 104px; column-gap: 4px; }
       .screen-overlay h2 { font-size: 22px; }
       .screen-overlay .score-display { font-size: 32px; }
       .overlay-btn { padding: 8px 20px; font-size: 15px; }
@@ -121,7 +125,7 @@
     <!-- HUD -->
     <div id="hud">
       <div id="hud-left">
-        <button class="hud-btn" id="btn-sound" title="Sound">&#x1F50A;</button>
+        <button class="hud-btn" id="btn-sound" title="Sound" aria-label="Toggle sound">&#x1F50A;</button>
       </div>
       <div id="score-container">
         <div id="game-title"><span class="logo-x" style="color:var(--logo-x-color)">X</span><span style="color:#E91E63">UP</span></div>
@@ -131,8 +135,8 @@
         <div id="hi-score">0</div>
       </div>
       <div id="hud-right">
-        <button class="hud-btn" id="btn-help" title="Help">?</button>
-        <button class="hud-btn" id="btn-menu" title="Menu">&#x2261;</button>
+        <button class="hud-btn" id="btn-help" title="Help" aria-label="Help">?</button>
+        <button class="hud-btn" id="btn-menu" title="Menu" aria-label="Menu">&#x2261;</button>
       </div>
     </div>
 

@@ -1,7 +1,8 @@
 /**
  * @fileoverview Tile color configuration for Hexa Merge.
  * Maps tile values to background and text colors.
- * For values beyond 65536, colors cycle based on tile level % 16.
+ * Values beyond the named palette receive a deterministic hue so levels do not
+ * silently reuse one of the first 16 block colors.
  */
 
 import { getTileLevel } from '../core/TileHelper.js';
@@ -75,10 +76,10 @@ export function getColor(value) {
     const direct = TILE_COLORS[value];
     if (direct) return direct.bg;
 
-    // Level-based cycling for values beyond 65536
+    // Deterministic extension: do not cycle the base palette.
     const level = getTileLevel(value);
-    const idx = level % COLOR_ENTRIES.length;
-    return COLOR_ENTRIES[idx].bg;
+    const hue = (level * 137.508 + 18) % 360;
+    return `hsl(${hue.toFixed(3)} 68% 48%)`;
 }
 
 /**
@@ -94,8 +95,8 @@ export function getTextColor(value) {
     const direct = TILE_COLORS[value];
     if (direct) return direct.text;
 
-    // Level-based cycling for values beyond 65536
+    // Match the generated hue used by getColor().
     const level = getTileLevel(value);
-    const idx = level % COLOR_ENTRIES.length;
-    return COLOR_ENTRIES[idx].text;
+    const hue = (level * 137.508 + 18) % 360;
+    return hue > 45 && hue < 210 ? '#222222' : '#FFFFFF';
 }

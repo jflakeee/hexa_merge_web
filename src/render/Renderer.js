@@ -6,7 +6,7 @@
 
 import { drawCell, drawEmptyCell } from './HexCellView.js';
 import { HexCoord } from '../core/HexCoord.js';
-import { formatValue } from '../core/TileHelper.js';
+import { formatScore } from '../core/ScoreFormatter.js';
 
 /**
  * Main canvas renderer for the hex merge game.
@@ -263,7 +263,7 @@ export class Renderer {
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
-                const scoreText = '+' + formatValue(popup.score);
+                const scoreText = formatScore(popup.score, { signed: true });
                 ctx.strokeText(scoreText, popup.x, popup.y);
                 ctx.fillText(scoreText, popup.x, popup.y);
 
