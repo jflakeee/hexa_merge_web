@@ -260,26 +260,33 @@ export class ProceduralSFX {
         }, 0.75);
     }
 
-    /** Soft staggered Cmaj7 chimes, with an upper octave for an upgrade. */
+    /**
+     * Warm crystal chord - a C major triad (+ octave) ringing together, not an
+     * arpeggio. Notes share the same crystalNote timbre used elsewhere so the
+     * chord blends with the rest of the SFX palette instead of sounding thin.
+     * The upgrade variant adds a high sparkle note (E6) for a brighter voicing.
+     */
     createCrownChangeSound() {
-        for (const [name, duration, freqs] of [
-            ['crownChange', 0.45, [523.25, 659.25, 783.99, 987.77]],
-            ['crownUpgrade', 0.60, [523.25, 659.25, 783.99, 987.77, 1046.5]],
-        ]) {
+        const CHORDS = {
+            crownChange: { duration: 0.55, notes: [523.25, 659.25, 783.99, 1046.5] }, // C5 E5 G5 C6
+            crownUpgrade: { duration: 0.70, notes: [523.25, 659.25, 783.99, 1046.5, 1318.51] }, // + E6
+        };
+        for (const [name, { duration, notes }] of Object.entries(CHORDS)) {
             this.createBuffer(name, duration, t => {
                 let sum = 0;
-                freqs.forEach((freq, i) => {
-                    const local = t - i * 0.032;
+                notes.forEach((freq, i) => {
+                    // Near-simultaneous onsets (few ms) avoid harsh phase build-up
+                    // while still reading as one chord, not a staggered arpeggio.
+                    const local = t - i * 0.006;
                     if (local < 0) return;
-                    const envelope = Math.min(local / 0.012, 1)
-                        * Math.exp(-6 * local / duration)
-                        * Math.min((duration - t) / 0.04, 1);
-                    const phase = 2 * Math.PI * freq * local;
-                    sum += envelope * (Math.sin(phase) + 0.12 * Math.sin(phase * 2.76))
-                        * (i === 4 ? 0.55 : 1) / freqs.length;
+                    const localP = Math.min(local / duration, 1);
+                    const weight = i === notes.length - 1 && notes.length > 4 ? 0.45 : 0.85;
+                    sum += this.crystalNote(freq, duration, local, localP) * weight;
                 });
-                return sum;
-            }, 0.55);
+                // Gentle tail fade so the chord doesn't cut off abruptly.
+                const release = Math.min((duration - t) / 0.08, 1);
+                return sum / notes.length * release;
+            }, 0.9);
         }
     }
 
